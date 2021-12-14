@@ -1,102 +1,76 @@
 <template>
 <div>
-  <div class="text-2xl"> First time using moodbase? (Yes | No | Never show me this again) </div>
-        <button @click="hideChangePanel">
-          <p v-if="likeToChange===true">Click this if you're happy with your current color selections and don't want to see these boxes</p>
-        <p  v-else> Click this if you changed your mind about your color selections </p>
-      </button>
-  <div class="flex-col">
-    <div v-if="likeToChange===true" class="px-16 py-4"> 
-      <h1 v-if="showPanel===false" class=" text-2xl text-start"> Click on a button to change the color you associate with that emotion.</h1>
-        <br>
-        <PlotColorPicker /> 
+<br>
+<br>
+<div class="flexrp">
+  <transition enter-active-class="animate__animated animate__slideInUp fast">
 
-      <div v-if="showPanel===true" class="flex px-32 py-16 ">
-          <ColorSelectionPanel />
-      </div>
+  <div class="flexc">
+    <PlotColorPicker  v-if="quadrantSelected==='none'" />
+
+    <color-selection-panel v-if="currentVariable!=''"  />
+
+  </div>
+  </transition>
+
+  <div class="center">
+      <PlotGrid4 />
     </div>
-      <div  width="50%" height="600px" class="flex flex-row flex-wrap py-4" > 
-        <PlotGrid @classified-coordinates="setClassification($event)" /> 
-        <RecentClickHistory />
-      <!-- <div width="50%" @wheel.prevent="isWheelLocked===true" >
-           <ClickMap @unlock-wheel="unlockWheel($event)" @lock-wheel="lockWheel($event)" /> 
-        </div> -->
-     
-        <div v-if="showClassification===true" class="px-32 text-3xl">
-           You seem to be feeling {{coordinateClassification.happiness.severity}}
-            {{coordinateClassification.happiness.mood}} and {{coordinateClassification.calm.severity}} {{coordinateClassification.calm.mood}}. Click to confirm.
-        </div>
-      </div>  
-
-        
-              
-    </div>
-
+</div>
 </div>
 </template>
 
 <script>
-import PlotGrid from '@/components/PlotGrid.vue'
-import PlotColorPicker from '@/components/PlotColorPicker.vue'
-import ColorSelectionPanel from '@/components/ColorSelectionPanel.vue'
-// import ClickMap from '@/components/ClickMap.vue'
-import RecentClickHistory from '@/components/RecentClickHistory.vue'
+import ColorSelectionPanel from '@/components/PlotComponents/ColorSelectionComponents/ColorSelectionPanel.vue'
+import PlotGrid4 from '@/components/PlotComponents/GridComponents/PlotGrid4.vue'
+import PlotColorPicker from '@/components/PlotComponents/ColorSelectionComponents/PlotColorPicker.vue'
 
 export default {
-    name:'PlotPage',
-    components: {PlotGrid, PlotColorPicker, ColorSelectionPanel, RecentClickHistory},
-    data() {
-      return {
-        initialPlotColors:{},
-        showClassification:false,
-        coordinateClassification:{},
-        isWheelLocked:false,
-        likeToChange:true,
-      }
+  name: 'PlotPage',
+  beforeCreate () {
+    this.$store.commit('plotPage/setDisplayToggleIncrementValue', 1)
+  },
+  components: {
+    ColorSelectionPanel,
+    PlotGrid4,
+    PlotColorPicker
+  },
+  computed: {
+    quadrantSelected () {
+      return this.$store.state.plotPage.activeQuadrant
     },
-    computed: {
-  
-      showPanel() {
-        return this.$store.state.currentMoodColors.panelVisibility;
-      },
-      currentVariable() {
-        return this.$store.state.currentMoodColors.variableSelection;
-      },
-      hoverClassification() {
-        return this.$store.state.moodClassification
-      }
-    },
-    methods:{
-      hideChangePanel() {
-        if (this.likeToChange===false){this.likeToChange=true}
-        else{this.likeToChange=false;}
-      },
-      unlockWheel(lockedStatus){
-        this.isWheelLocked=lockedStatus;
-      },
-      lockWheel(lockedStatus){
-        this.isWheelLocked=lockedStatus;
-      },
-      setClassification(classification){
-        this.coordinateClassification=classification
-        this.showClassification=true;
-      },
-          
-      togglePanel(variableToChange){
-
-       this.$store.commit('currentMoodColors/setVariableToChange',variableToChange);
-        if (this.showPanel===false) {
-          this.$store.state.currentMoodColors.panelVisibility=true
-        }
-      },
-    },
-    async mounted(){
-      const uid = this.$store.state.auth.user.id
-      this.$store.dispatch("currentMoodColors/createInitialState",uid)
+    currentVariable () {
+      return this.$store.state.plotPage.panelState.variableSelectedForColorChange
     }
+  }
 }
 </script>
 
 <style>
 
+.flexrp{
+  position:fixed;
+  transform: translate(30%, 0);
+  display:flex;
+  margin:0;
+  padding:0;
+  flex-direction:row;
+  overflow:visible;
+}
+
+.center {
+  transform: translate(50%, 0);
+  position:fixed;
+  margin: auto;
+  width: 50vw;
+  height: 50vw;
+  /* border: 3px solid gray; */
+}
+
+/* .flexc{
+  display:flex;
+  margin:0;
+  padding:0;
+  flex-direction:column;
+} */
 </style>

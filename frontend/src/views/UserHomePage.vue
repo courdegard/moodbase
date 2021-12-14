@@ -6,8 +6,8 @@
 <script>
 import UserHome from '../components/UserHome.vue'
 export default {
-    name:'UserHomePage',
-    components: {UserHome,},
-    
+  name: 'UserHomePage',
+  components: { UserHome }
+
 }
 </script>

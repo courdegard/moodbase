@@ -1,68 +1,61 @@
-import AuthService from '../services/auth.service';
+import AuthService from '../services/auth.service'
 
-const user = JSON.parse(localStorage.getItem('user'));
-const initialState = user
-  ? { status: { loggedIn: true }, user }
-  : { status: { loggedIn: false }, user: null };
+const initialState = {
+  loggedIn: false
+}
 
 export const auth = {
   namespaced: true,
   state: initialState,
   actions: {
-    login({ commit }, user) {
-       return AuthService.login(user).then(
-        response=>
-          {
-            if (response.ok) {
-              commit('loginSuccess',response)
-              return response
+    login ({ commit }, user) {
+      return AuthService.login(user)
+        .then(
+          response => response.json())
+        .then(
+          data => {
+            if ('detail' in data) {
+              return 'Failed'
             }
-          else{
-          commit('loginFailure');
-          return Error(response.statusText || response.status)
+            commit('loginSuccess', data)
+            return data
           }
-        }
-        
         )
-      },
-    logout({ commit }, user) {
-      AuthService.logout(user);
-      commit('logout');
+        .catch(
+          (error) => {
+            commit('loginFailure')
+            return error
+          }
+        )
     },
-    register({ commit }, user) {
-      return AuthService.register(user).then(
-        response => {
-            if(response.ok){
-              commit('registerSuccess');
-              return response        
-        }
-        else{
-          commit('registerFailure');
-          return Error(response.statusText || response.status)
-        }
-        }
-      )
+    logout ({ commit }) {
+      localStorage.clear()
+      commit('logoutSuccess')
     },
+    activate ({ commit }, token) {
+      commit('loginSuccess', token)
     },
-  mutations: {
-    loginSuccess(state, user) {
-      state.status.loggedIn = true;
-      state.user = user;
-    },
-    loginFailure(state) {
-      state.status.loggedIn = false;
-      state.user = null;
-    },
-    logout(state) {
-      state.status.loggedIn = false;
-      state.user = null;
-    },
-    registerSuccess(state) {
-      state.status.loggedIn = false;
-    },
-    registerFailure(state) {
-      state.status.loggedIn = false;
+    refresh ({ commit }) {
+      commit('loginSuccess')
     }
   },
+  mutations: {
+    loginSuccess (state, tokenData) {
+      state.loggedIn = true
+      window.localStorage.setItem('accessToken', tokenData.access_token)
+      window.localStorage.setItem('refreshToken', tokenData.refresh_token)
+    },
+    loginFailure (state) {
+      state.loggedIn = false
+      state.user = null
+    },
+    logoutSuccess (state) {
+      state.loggedIn = false
+      return AuthService.logout()
+    },
+    refreshToken (state, newToken) {
+      window.localStorage.setItem('accessToken', newToken)
+    }
+  }
 
-};
+}
